@@ -1,0 +1,23 @@
+.biggidroid-contact-form-description {
+  margin-top: 4px;
+}
+
+.biggidroid-contact-form-description p:first-child {
+  margin: 0px;
+  color: #6e6363;
+}
+
+.biggidroid-contact-highlight {
+  background-color: #2271b1;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  margin: 0px;
+  color: white;
+  font-family: monospace;
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+.biggidroid-contact-tabs {
+  margin-top: 2rem;
+}
