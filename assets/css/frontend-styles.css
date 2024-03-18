@@ -1,0 +1,13 @@
+.biggidroid-form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 14px;
+}
+
+.biggidroid-form-group label {
+  margin-bottom: 5px;
+}
+
+.biggidroid-contact-header h3 {
+  font-weight: 600;
+}

@@ -28,12 +28,96 @@ class BiggiDroidContactForm
         add_action('init', array($this, 'init'));
         //save post action
         add_action('save_post', array($this, 'savePostGeneratedId'), 10, 3);
+        //save post
+        add_action('save_post', array($this, 'savePostOthersData'), 11, 3);
         //create shortcode
         add_shortcode('biggidroid-contact-form', array($this, 'biggidroidContactFormShortcode'));
         //column table
         add_filter('manage_biggidroid_contact_posts_columns', array($this, 'addCustomColumns'));
         //column table content
         add_action('manage_biggidroid_contact_posts_custom_column', array($this, 'addCustomColumnsContent'), 10, 2);
+        //add frontend assets
+        add_action('wp_enqueue_scripts', array($this, 'frontendAssetsScripts'));
+        //add multiple shortcode
+        $this->addMultipleShortcode();
+    }
+
+    /**
+     * addMultipleShortcode
+     * 
+     */
+    function addMultipleShortcode(): void
+    {
+        //shortcodes
+        $shortcodes = [
+            'name' => 'nameShortCode',
+            'phone' => 'phoneShortCode',
+            'email' => 'emailShortCode',
+            'message' => 'messageShortCode'
+        ];
+        //loop through shortcodes
+        foreach ($shortcodes as $shortcode => $callback) {
+            //add shortcode
+            add_shortcode(BIGGIDROID_CONTACT_SHORT_CODE_PREFIX . $shortcode, array($this, $callback));
+        }
+    }
+
+    function nameShortCode($attr): string
+    {
+        ob_start();
+?>
+        <div class="biggidroid-form-group">
+            <label for="name">Name</label>
+            <input type="text" name="name" id="biggidroid_name" placeholder="Enter your name">
+        </div>
+    <?php
+        return ob_get_clean();
+    }
+
+    function phoneShortCode(): string
+    {
+        ob_start();
+    ?>
+        <div class="biggidroid-form-group">
+            <label for="phone">Phone Number</label>
+            <input type="text" name="phone" id="biggidroid_phone" placeholder="Enter your phone">
+        </div>
+    <?php
+        return ob_get_clean();
+    }
+
+    function emailShortCode(): string
+    {
+        ob_start();
+    ?>
+        <div class="biggidroid-form-group">
+            <label for="email">Email</label>
+            <input type="email" name="email" id="biggidroid_email" placeholder="Enter your email">
+        </div>
+    <?php
+        return ob_get_clean();
+    }
+
+    function messageShortCode(): string
+    {
+        ob_start();
+    ?>
+        <div class="biggidroid-form-group">
+            <label for="message">Message</label>
+            <textarea name="message" id="" cols="30" rows="10" placeholder="Enter your message"></textarea>
+        </div>
+<?php
+        return ob_get_clean();
+    }
+
+    /**
+     * frontendAssetsScripts
+     * 
+     */
+    function frontendAssetsScripts(): void
+    {
+        //add styles
+        wp_enqueue_style('biggidroid-frontend-assets', BIGGIDROID_CONTACT_ASSETS_URL . 'css/frontend-styles.css', [], BIGGIDROID_CONTACT_PLUGIN_VERSION);
     }
 
     /**
@@ -44,6 +128,7 @@ class BiggiDroidContactForm
     {
         //check if post type is biggidroid_contact
         if ($post->post_type == 'biggidroid_contact') {
+            $post_id = $post->ID;
             //ob start
             ob_start();
             //include the file
@@ -114,6 +199,10 @@ class BiggiDroidContactForm
         if (!$title) {
             $title = 'BiggiDroid Contact Form';
         }
+        //get the post id
+        $postData = $this->getPostDataByGeneratedId($id);
+        //post id
+        $post_id = $postData->post_id;
         //get the template
         ob_start();
         include_once BIGGIDROID_CONTACT_PLUGIN_DIR . 'templates/biggidroid-frontend-view.php';
@@ -145,6 +234,24 @@ class BiggiDroidContactForm
                     'generated_id' => $generated_id
                 ]
             );
+        }
+    }
+
+    /**
+     * savePostOthersData
+     * 
+     */
+    function savePostOthersData($post_id, $post, $update): void
+    {
+        //check if post type is biggidroid_contact
+        if ($post->post_type == 'biggidroid_contact') {
+            //check if post name biggidroid-form-content
+            if (isset($_POST['biggidroid-form-content'])) {
+                //get the value
+                $biggidroid_form_content = sanitize_text_field($_POST['biggidroid-form-content']);
+                //update post meta
+                update_post_meta($post_id, 'biggidroid_form_content', $biggidroid_form_content);
+            }
         }
     }
 
@@ -243,6 +350,31 @@ class BiggiDroidContactForm
         $sql = $wpdb->prepare(
             "SELECT * FROM $table WHERE post_id = %d",
             $post_id
+        );
+        //get results
+        $results = $wpdb->get_results($sql);
+        //check if results
+        if ($results) {
+            return $results[0];
+        }
+        return false;
+    }
+
+    /**
+     * Get post data by generated id
+     * @param int $generated_id
+     * 
+     * @return mixed|bool
+     */
+    public function getPostDataByGeneratedId($generated_id)
+    {
+        global $wpdb;
+        //table
+        $table = $wpdb->prefix . 'biggidroid_contacts';
+        //sql
+        $sql = $wpdb->prepare(
+            "SELECT * FROM $table WHERE generated_id = %d",
+            $generated_id
         );
         //get results
         $results = $wpdb->get_results($sql);

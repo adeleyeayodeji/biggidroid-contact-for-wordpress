@@ -23,6 +23,8 @@ define('BIGGIDROID_CONTACT_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('BIGGIDROID_CONTACT_PLUGIN_VERSION', time());
 //assets url
 define('BIGGIDROID_CONTACT_ASSETS_URL', BIGGIDROID_CONTACT_PLUGIN_URL . 'assets/');
+//shortcode prefix
+define('BIGGIDROID_CONTACT_SHORT_CODE_PREFIX', 'biggidroid_contact_');
 
 
 //check if BiggiDroidContactForm is exists
