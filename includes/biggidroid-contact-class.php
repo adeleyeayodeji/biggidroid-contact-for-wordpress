@@ -53,7 +53,8 @@ class BiggiDroidContactForm
             'name' => 'nameShortCode',
             'phone' => 'phoneShortCode',
             'email' => 'emailShortCode',
-            'message' => 'messageShortCode'
+            'message' => 'messageShortCode',
+            'subject' => 'subjectShortCode'
         ];
         //loop through shortcodes
         foreach ($shortcodes as $shortcode => $callback) {
@@ -105,6 +106,18 @@ class BiggiDroidContactForm
         <div class="biggidroid-form-group">
             <label for="message">Message</label>
             <textarea name="message" id="" cols="30" rows="10" placeholder="Enter your message"></textarea>
+        </div>
+    <?php
+        return ob_get_clean();
+    }
+
+    function subjectShortCode(): string
+    {
+        ob_start();
+    ?>
+        <div class="biggidroid-form-group">
+            <label for="subject">Subject</label>
+            <input type="text" name="subject" id="biggidroid_subject" placeholder="Enter your subject">
         </div>
 <?php
         return ob_get_clean();
@@ -248,7 +261,7 @@ class BiggiDroidContactForm
             //check if post name biggidroid-form-content
             if (isset($_POST['biggidroid-form-content'])) {
                 //get the value
-                $biggidroid_form_content = sanitize_text_field($_POST['biggidroid-form-content']);
+                $biggidroid_form_content = sanitize_textarea_field($_POST['biggidroid-form-content']);
                 //update post meta
                 update_post_meta($post_id, 'biggidroid_form_content', $biggidroid_form_content);
             }
