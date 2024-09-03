@@ -14,6 +14,31 @@ if (!defined('WPINC')) {
  */
 class BiggiDroidContactForm
 {
+    /**
+     * BiggiDroidContactForm instance
+     * @var BiggiDroidContactForm
+     */
+    private static $instance;
+
+    /**
+     * Get BiggiDroidContactForm instance
+     * @return BiggiDroidContactForm
+     */
+    public static function getInstance()
+    {
+        //check if instance is null
+        if (self::$instance == null) {
+            //create new instance
+            self::$instance = new self();
+        }
+        //return instance
+        return self::$instance;
+    }
+
+    /**
+     * Constructor
+     * 
+     */
     public function __construct()
     {
         //init the plugin
@@ -40,6 +65,117 @@ class BiggiDroidContactForm
         add_action('wp_enqueue_scripts', array($this, 'frontendAssetsScripts'));
         //add multiple shortcode
         $this->addMultipleShortcode();
+        //add ajax biggidroid_send_message
+        add_action('wp_ajax_biggidroid_send_message', array($this, 'biggidroidSendMessage')); //send with user login
+        add_action('wp_ajax_nopriv_biggidroid_send_message', array($this, 'biggidroidSendMessage')); //send without user login
+    }
+
+    /**
+     * biggidroidSendMessage
+     * 
+     */
+    public function biggidroidSendMessage()
+    {
+        try {
+            //get the nonce data
+            if (!wp_verify_nonce($_POST['nonce'], 'biggidroid-contact-message')) {
+                wp_send_json_error([
+                    'message' => 'Invalid nonce, please reload the page'
+                ]);
+            }
+            //get the form field
+            $biggidroid_subject = sanitize_text_field($_POST['biggidroid-subject']);
+            $biggidroid_name = sanitize_text_field($_POST['biggidroid-name']);
+            $biggidroid_email = sanitize_email($_POST['biggidroid-email']);
+            $biggidroid_phone = sanitize_text_field($_POST['biggidroid-phone']);
+            $biggidroid_message = sanitize_textarea_field($_POST['biggidroid-message']);
+            //get the post id
+            $post_id = sanitize_text_field($_POST['biggidroid-post-id']);
+
+            //format the message
+            $message = $this->biggidroidMessageFormat([
+                'name' => $biggidroid_name,
+                'email' => $biggidroid_email,
+                'phone' => $biggidroid_phone,
+                'message' => $biggidroid_message,
+                'subject' => $biggidroid_subject,
+                'post_id' => $post_id
+            ]);
+        } catch (\Exception $e) {
+            //log to debug
+            error_log("Biggidroid contact error: " . $e->getMessage());
+            wp_send_json_error([
+                'message' => 'Something went wrong: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * BiggiDroid Message Format
+     * @param $args array
+     * 
+     * @return string
+     */
+    public function biggidroidMessageFormat($args): string
+    {
+        //extract
+        extract($args); //create variables from the array
+        //get saved form fields
+        $form_fields = $this->getBiggiDroidFormFields($post_id);
+        return "";
+    }
+
+    /**
+     * Get BiggiDroid Form Fields
+     * @param int $post_id
+     * 
+     * @return array
+     */
+    public function getBiggiDroidFormFields($post_id): array
+    {
+        //create default array
+        $biggidroid_default_array = [
+            'biggidroid-form-content' => '[biggidroid_contact_subject] 
+
+[biggidroid_contact_name] 
+
+[biggidroid_contact_phone]
+
+[biggidroid_contact_email] 
+
+[biggidroid_contact_message]',
+            'biggidroid-mail-to' => '[_site_admin_email]',
+            'biggidroid-mail-from' => '[_site_title]',
+            'biggidroid-mail-subject' => '[_site_title] - [your-subject]',
+            'biggidroid-mail-additional-headers' => 'Reply-To: [your-email]',
+            'biggidroid-mail-body' => 'From: [your-name] [your-email]
+Subject: [your-subject]
+
+Message Body:
+[your-message]
+
+-- 
+This is a notification that a contact form was submitted on your website ([_site_title] [_site_url]).',
+            'biggidroid-message-success' => 'Message sent!',
+            'biggidroid-message-error' => 'Something went wrong.',
+        ];
+
+        try {
+            //get saved form fields
+            $form_fields = get_post_meta($post_id, 'biggidroid_form_fields', true);
+            //check if form fields is empty, if empty return default form fields
+            if (empty($form_fields)) {
+                //return default form fields
+                return $biggidroid_default_array;
+            }
+            //return form fields
+            return $form_fields;
+        } catch (\Exception $th) {
+            //log to debug
+            error_log("Biggidroid contact error: " . $th->getMessage());
+            //return default form fields
+            return $biggidroid_default_array;
+        }
     }
 
     /**
@@ -69,7 +205,7 @@ class BiggiDroidContactForm
 ?>
         <div class="biggidroid-form-group">
             <label for="name">Name</label>
-            <input type="text" name="name" id="biggidroid_name" placeholder="Enter your name">
+            <input type="text" name="biggidroid-name" id="biggidroid_name" placeholder="Enter your name">
         </div>
     <?php
         return ob_get_clean();
@@ -81,7 +217,7 @@ class BiggiDroidContactForm
     ?>
         <div class="biggidroid-form-group">
             <label for="phone">Phone Number</label>
-            <input type="text" name="phone" id="biggidroid_phone" placeholder="Enter your phone">
+            <input type="text" name="biggidroid-phone" id="biggidroid_phone" placeholder="Enter your phone">
         </div>
     <?php
         return ob_get_clean();
@@ -93,7 +229,7 @@ class BiggiDroidContactForm
     ?>
         <div class="biggidroid-form-group">
             <label for="email">Email</label>
-            <input type="email" name="email" id="biggidroid_email" placeholder="Enter your email">
+            <input type="email" name="biggidroid-email" id="biggidroid_email" placeholder="Enter your email">
         </div>
     <?php
         return ob_get_clean();
@@ -105,7 +241,7 @@ class BiggiDroidContactForm
     ?>
         <div class="biggidroid-form-group">
             <label for="message">Message</label>
-            <textarea name="message" id="" cols="30" rows="10" placeholder="Enter your message"></textarea>
+            <textarea name="biggidroid-message" id="" cols="30" rows="10" placeholder="Enter your message"></textarea>
         </div>
     <?php
         return ob_get_clean();
@@ -117,7 +253,7 @@ class BiggiDroidContactForm
     ?>
         <div class="biggidroid-form-group">
             <label for="subject">Subject</label>
-            <input type="text" name="subject" id="biggidroid_subject" placeholder="Enter your subject">
+            <input type="text" name="biggidroid-subject" id="biggidroid_subject" placeholder="Enter your subject">
         </div>
 <?php
         return ob_get_clean();
@@ -258,13 +394,37 @@ class BiggiDroidContactForm
     {
         //check if post type is biggidroid_contact
         if ($post->post_type == 'biggidroid_contact') {
-            //check if post name biggidroid-form-content
-            if (isset($_POST['biggidroid-form-content'])) {
-                //get the value
-                $biggidroid_form_content = sanitize_textarea_field($_POST['biggidroid-form-content']);
-                //update post meta
-                update_post_meta($post_id, 'biggidroid_form_content', $biggidroid_form_content);
+            //collect all form fields
+            $form_fields = []; //initialize form fields array
+            //loop through $_POST
+            foreach ($_POST as $key => $value) {
+                //if key is matching biggidroid-
+                if (strpos($key, 'biggidroid-') !== false) {
+                    //check if key is matching biggidroid-form-content
+                    switch ($key) {
+                        case 'biggidroid-form-content':
+                            //pass the value to the form_fields array
+                            $form_fields[$key] = sanitize_textarea_field($value);
+                            break;
+                            //biggidroid-mail-additional-headers
+                        case 'biggidroid-mail-additional-headers':
+                            //pass the value to the form_fields array
+                            $form_fields[$key] = sanitize_textarea_field($value);
+                            break;
+                            //biggidroid-mail-body
+                        case 'biggidroid-mail-body':
+                            //pass the value to the form_fields array
+                            $form_fields[$key] = sanitize_textarea_field($value);
+                            break;
+                        default:
+                            //add to form fields
+                            $form_fields[$key] = sanitize_text_field($value);
+                            break;
+                    }
+                }
             }
+            //update post meta
+            update_post_meta($post_id, 'biggidroid_form_fields', $form_fields);
         }
     }
 

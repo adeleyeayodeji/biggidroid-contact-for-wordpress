@@ -32,5 +32,8 @@ if (!class_exists('BiggiDroidContactForm')) {
     //include the class file
     include_once BIGGIDROID_CONTACT_PLUGIN_DIR . '/includes/biggidroid-contact-class.php';
     //create an instance
-    new BiggiDroidContactForm();
+    BiggiDroidContactForm::getInstance();
+
+    //include helper file
+    include_once BIGGIDROID_CONTACT_PLUGIN_DIR . '/includes/helper.php';
 }

@@ -3,6 +3,9 @@
 if (!defined('WPINC')) {
     die('Cant access file directly');
 }
+
+//get biggidroid_form_fields
+$biggidroid_form_fields = $this->getBiggiDroidFormFields($post_id);
 ?>
 <style>
     .ui-state-active,
@@ -35,6 +38,23 @@ if (!defined('WPINC')) {
     .biggidroid-form input {
         width: 100%;
     }
+
+    .biggidroid-contact-messages {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        margin-bottom: 10px;
+    }
+
+    .biggidroid-contact-messages label {
+        font-weight: normal;
+    }
+
+    .biggidroid-contact-messages input {
+        width: 100%;
+        padding: 8px;
+        outline: none;
+    }
 </style>
 <div class="biggidroid-contact-tabs">
     <div id="biggidroid-contact-tabs-content">
@@ -45,11 +65,18 @@ if (!defined('WPINC')) {
         </ul>
         <div id="tabs-form">
             <h3>Form</h3>
+            <code>
+                [biggidroid_contact_subject]
+                [biggidroid_contact_name]
+                [biggidroid_contact_phone]
+                [biggidroid_contact_email]
+                [biggidroid_contact_message]
+            </code>
             <p>
                 You can edit the form template here.
             </p>
             <div class="biggidroid-contact-edit-area">
-                <textarea name="biggidroid-form-content" id="biggidroid-form-content" placeholder="Enter form content"><?php echo esc_html(get_post_meta($post_id, 'biggidroid_form_content', true)); ?></textarea>
+                <textarea name="biggidroid-form-content" id="biggidroid-form-content" placeholder="Enter form content"><?php echo esc_html($biggidroid_form_fields['biggidroid-form-content']); ?></textarea>
             </div>
         </div>
         <div id="tabs-mail">
@@ -68,7 +95,7 @@ if (!defined('WPINC')) {
                             <label for="biggidroid-mail-to">To:</label>
                         </th>
                         <td>
-                            <input type="text" class="regular-text" name="biggidroid-mail-to" id="biggidroid-mail-to" value="[_site_admin_email]">
+                            <input type="text" class="regular-text" name="biggidroid-mail-to" id="biggidroid-mail-to" value="<?php echo esc_html($biggidroid_form_fields['biggidroid-mail-to']); ?>">
                         </td>
                     </tr>
                     <tr>
@@ -76,7 +103,7 @@ if (!defined('WPINC')) {
                             <label for="biggidroid-mail-from">From:</label>
                         </th>
                         <td>
-                            <input type="text" class="regular-text" name="biggidroid-mail-from" id="biggidroid-mail-from" value="[_site_title] <usermail@gmail.com>">
+                            <input type="text" class="regular-text" name="biggidroid-mail-from" id="biggidroid-mail-from" value="<?php echo esc_html($biggidroid_form_fields['biggidroid-mail-from']); ?>">
                         </td>
                     </tr>
                     <tr>
@@ -84,7 +111,7 @@ if (!defined('WPINC')) {
                             <label for="biggidroid-mail-subject">Subject:</label>
                         </th>
                         <td>
-                            <input type="text" class="regular-text" name="biggidroid-mail-subject" id="biggidroid-mail-subject" value="[_site_title] - [your-subject]">
+                            <input type="text" class="regular-text" name="biggidroid-mail-subject" id="biggidroid-mail-subject" value="<?php echo esc_html($biggidroid_form_fields['biggidroid-mail-subject']); ?>">
                         </td>
                     </tr>
                     <tr>
@@ -92,7 +119,7 @@ if (!defined('WPINC')) {
                             <label for="biggidroid-mail-additional-headers">Additional Headers:</label>
                         </th>
                         <td>
-                            <textarea name="biggidroid-mail-additional-headers" id="biggidroid-mail-additional-headers" placeholder="Enter additional headers">Reply-To: [your-email]</textarea>
+                            <textarea name="biggidroid-mail-additional-headers" id="biggidroid-mail-additional-headers" placeholder="Enter additional headers"><?php echo esc_html($biggidroid_form_fields['biggidroid-mail-additional-headers']); ?></textarea>
                         </td>
                     </tr>
                     <tr>
@@ -100,22 +127,25 @@ if (!defined('WPINC')) {
                             <label for="biggidroid-mail-body">Message body:</label>
                         </th>
                         <td>
-                            <textarea name="biggidroid-mail-body" id="biggidroid-mail-body" placeholder="Enter mail body">From: [your-name] [your-email]
-Subject: [your-subject]
-
-Message Body:
-[your-message]
-
--- 
-This is a notification that a contact form was submitted on your website ([_site_title] [_site_url]).</textarea>
+                            <textarea name="biggidroid-mail-body" id="biggidroid-mail-body" placeholder="Enter mail body"><?php echo esc_html($biggidroid_form_fields['biggidroid-mail-body']); ?></textarea>
                         </td>
                     </tr>
                 </table>
             </div>
         </div>
         <div id="tabs-messages">
-            <p>Mauris eleifend est et turpis. Duis id erat. Suspendisse potenti. Aliquam vulputate, pede vel vehicula accumsan, mi neque rutrum erat, eu congue orci lorem eget lorem. Vestibulum non ante. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Fusce sodales. Quisque eu urna vel enim commodo pellentesque. Praesent eu risus hendrerit ligula tempus pretium. Curabitur lorem enim, pretium nec, feugiat nec, luctus a, lacus.</p>
-            <p>Duis cursus. Maecenas ligula eros, blandit nec, pharetra at, semper at, magna. Nullam ac lacus. Nulla facilisi. Praesent viverra justo vitae neque. Praesent blandit adipiscing velit. Suspendisse potenti. Donec mattis, pede vel pharetra blandit, magna ligula faucibus eros, id euismod lacus dolor eget odio. Nam scelerisque. Donec non libero sed nulla mattis commodo. Ut sagittis. Donec nisi lectus, feugiat porttitor, tempor ac, tempor vitae, pede. Aenean vehicula velit eu tellus interdum rutrum. Maecenas commodo. Pellentesque nec elit. Fusce in lacus. Vivamus a libero vitae lectus hendrerit hendrerit.</p>
+            <h3>Messages</h3>
+            <p>
+                You can edit messages used in various situations here
+            </p>
+            <div class="biggidroid-contact-messages">
+                <label for="biggidroid-message-success">Success message:</label>
+                <input name="biggidroid-message-success" id="biggidroid-message-success" placeholder="Enter success message" value="<?php echo esc_html($biggidroid_form_fields['biggidroid-message-success']); ?>" />
+            </div>
+            <div class="biggidroid-contact-messages">
+                <label for="biggidroid-message-error">Error message:</label>
+                <input name="biggidroid-message-error" id="biggidroid-message-error" placeholder="Enter error message" value="<?php echo esc_html($biggidroid_form_fields['biggidroid-message-error']); ?>" />
+            </div>
         </div>
     </div>
 </div>
