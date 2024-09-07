@@ -93,7 +93,7 @@ class BiggiDroidContactForm
             $post_id = sanitize_text_field($_POST['biggidroid-post-id']);
 
             //format the message
-            $message = $this->biggidroidMessageFormat([
+            $response = $this->biggidroidMessageFormat([
                 'name' => $biggidroid_name,
                 'email' => $biggidroid_email,
                 'phone' => $biggidroid_phone,
@@ -101,6 +101,17 @@ class BiggiDroidContactForm
                 'subject' => $biggidroid_subject,
                 'post_id' => $post_id
             ]);
+
+            //check if response is true
+            if ($response['response']) {
+                wp_send_json_success([
+                    'message' => $response['form_fields']['biggidroid-message-success']
+                ]);
+            } else {
+                wp_send_json_error([
+                    'message' => $response['form_fields']['biggidroid-message-error']
+                ]);
+            }
         } catch (\Exception $e) {
             //log to debug
             error_log("Biggidroid contact error: " . $e->getMessage());
@@ -114,15 +125,57 @@ class BiggiDroidContactForm
      * BiggiDroid Message Format
      * @param $args array
      * 
-     * @return string
+     * @return array
      */
-    public function biggidroidMessageFormat($args): string
+    public function biggidroidMessageFormat($args): array
     {
-        //extract
-        extract($args); //create variables from the array
-        //get saved form fields
-        $form_fields = $this->getBiggiDroidFormFields($post_id);
-        return "";
+        try {
+            //extract
+            extract($args); //create variables from the array
+            //get saved form fields
+            $form_fields = $this->getBiggiDroidFormFields($post_id);
+            //site title
+            $site_title = get_option('blogname');
+            //site url
+            $site_url = site_url();
+            //admin email
+            $admin_email = get_option('admin_email');
+
+            //prepare replacements
+            $replacements = [
+                '[your-subject]' => $subject,
+                '[your-name]' => $name,
+                '[your-email]' => $email,
+                '[your-phone]' => $phone,
+                '[your-message]' => $message,
+                '[_site_title]' => $site_title,
+                '[_site_url]' => $site_url,
+                '[_site_admin_email]' => $admin_email,
+            ];
+
+            //loop through form fields
+            foreach ($form_fields as $key => $value) {
+                //skip if key match biggidroid-form-content
+                if ($key == 'biggidroid-form-content') {
+                    continue; //skip
+                }
+                //replace the value
+                $form_fields[$key] = strtr($value, $replacements);
+            }
+
+            //send mail 
+            $response = wp_mail(
+                $form_fields['biggidroid-mail-to'],
+                $form_fields['biggidroid-mail-subject'],
+                $form_fields['biggidroid-mail-body'],
+                $form_fields['biggidroid-mail-additional-headers']
+            );
+
+            //return message
+            return ['response' => $response, 'form_fields' => $form_fields];
+        } catch (\Throwable $th) {
+            throw $th;
+        }
     }
 
     /**

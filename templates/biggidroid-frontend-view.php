@@ -33,7 +33,7 @@ $contact_body = $biggidroid_form_fields['biggidroid-form-content'];
         <form action="" id="biggidroid-contact-form-submit">
             <input type="hidden" name="action" value="biggidroid_send_message">
             <input type="hidden" name="nonce" value="<?php echo wp_create_nonce('biggidroid-contact-message'); ?>">
-            <input type="hidden" name="biggipost-id" value="<?php echo esc_attr($post_id); ?>">
+            <input type="hidden" name="biggidroid-post-id" value="<?php echo esc_attr($post_id); ?>">
             <?php
             //get the shortcode regex
             $shortcode_regex = get_shortcode_regex();
@@ -82,7 +82,7 @@ $contact_body = $biggidroid_form_fields['biggidroid-form-content'];
                         //show success message
                         form.find('#biggidroid-form-message').html(
                             `
-                            <p class="biggidroid-form-message-success">${response.message}</p>
+                            <p class="biggidroid-form-message-success">${response.data.message}</p>
                             `
                         );
                         //reset the form
@@ -91,7 +91,7 @@ $contact_body = $biggidroid_form_fields['biggidroid-form-content'];
                         //show error message
                         form.find('#biggidroid-form-message').html(
                             `
-                            <p class="biggidroid-form-message-error">${response.message}</p>
+                            <p class="biggidroid-form-message-error">${response.data.message}</p>
                             `
                         );
                     }
